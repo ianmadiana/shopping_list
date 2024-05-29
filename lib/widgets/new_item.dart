@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:shopping_list/data/categories.dart';
 import 'package:shopping_list/models/category.dart';
 import 'package:shopping_list/models/grocery_item.dart';
 
 class NewItem extends StatefulWidget {
-  const NewItem({super.key});
+  const NewItem({Key? key}) : super(key: key);
 
   @override
   State<NewItem> createState() => _NewItemState();
@@ -18,16 +19,17 @@ class _NewItemState extends State<NewItem> {
   var _selectedCategory = categories[Categories.carbs]!;
 
   void _saveItem() {
-    _formKey.currentState!.validate();
-    _formKey.currentState!.save();
-    Navigator.of(context).pop(
-      GroceryItem(
-        id: DateTime.now().toString(),
-        name: _enteredName,
-        quantity: _enteredQuantity,
-        category: _selectedCategory,
-      ),
-    );
+    if (_formKey.currentState!.validate()) {
+      _formKey.currentState!.save();
+      Navigator.of(context).pop(
+        GroceryItem(
+          id: DateTime.now().toString(),
+          name: _enteredName,
+          quantity: _enteredQuantity,
+          category: _selectedCategory,
+        ),
+      );
+    }
   }
 
   void _resetItem() {
@@ -38,47 +40,70 @@ class _NewItemState extends State<NewItem> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Add a new item'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
       ),
       body: Padding(
-        padding: const EdgeInsets.all(10),
+        padding: const EdgeInsets.all(20),
         child: Form(
           key: _formKey,
+          autovalidateMode: AutovalidateMode
+              .onUserInteraction, // Set autovalidateMode ke onUserInteraction
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Text(
+                'Add a new item',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+              ),
+              const SizedBox(height: 20),
               TextFormField(
                 maxLength: 50,
-                decoration: const InputDecoration(
-                  label: Text('Name'),
+                decoration: InputDecoration(
+                  filled: true,
+                  labelText: 'Name',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
                 ),
-                // controller: nameC,
                 validator: (value) {
                   if (value == null ||
                       value.isEmpty ||
                       value.trim().length <= 1 ||
                       value.trim().length > 50) {
-                    return 'Harus diantara 1 sampai 50 karakter';
+                    return 'Must be between 1 and 50 characters';
                   }
                   return null;
                 },
                 onSaved: (newValue) => _enteredName = newValue!,
               ),
+              const SizedBox(height: 20),
               Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Expanded(
+                  SizedBox(
+                    width: 150,
                     child: TextFormField(
-                      decoration: const InputDecoration(
-                        label: Text('Quantity'),
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
+                      decoration: InputDecoration(
+                        filled: true,
+                        labelText: 'Quantity',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
                       ),
-                      // controller: quantityC,
                       initialValue: _enteredQuantity.toString(),
                       validator: (value) {
                         if (value == null ||
                             value.isEmpty ||
                             int.tryParse(value) == null ||
                             int.tryParse(value)! <= 0) {
-                          return 'Harus memiliki nomor positif yang valid';
+                          return 'Must be a valid positive number';
                         }
                         return null;
                       },
@@ -87,27 +112,34 @@ class _NewItemState extends State<NewItem> {
                     ),
                   ),
                   const SizedBox(width: 20),
-                  Expanded(
+                  SizedBox(
+                    width: 200,
                     child: DropdownButtonFormField(
+                      decoration: InputDecoration(
+                        filled: true,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                      ),
                       value: _selectedCategory,
-                      items: [
-                        for (final category in categories.entries)
-                          DropdownMenuItem(
-                            value: category.value,
-                            child: Row(
-                              children: [
-                                Container(
-                                  height: 24,
-                                  width: 24,
-                                  color: category.value.color,
+                      items: categories.entries
+                          .map((entry) => DropdownMenuItem(
+                                value: entry.value,
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      height: 24,
+                                      width: 24,
+                                      color: entry.value.color,
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Text(entry.value.title),
+                                  ],
                                 ),
-                                const SizedBox(width: 10),
-                                Text(category.value.title)
-                              ],
-                            ),
-                          )
-                      ],
-                      onChanged: (value) => _selectedCategory = value!,
+                              ))
+                          .toList(),
+                      onChanged: (value) =>
+                          setState(() => _selectedCategory = value!),
                     ),
                   ),
                 ],
